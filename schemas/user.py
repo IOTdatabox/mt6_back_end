@@ -1,5 +1,4 @@
 from datetime import datetime
-from enum import Enum
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
 
@@ -38,12 +37,15 @@ class MovementScore(BaseModel):
 # Request/Response schemas
 class UserBase(BaseModel):
     email: str
-    role: str
-    first_name: str
-    last_name: str
+    role: str = "consultant"  # default value
+    first_name: str = Field(..., alias="firstName")
+    last_name: str = Field(..., alias="lastName")
+
+    class Config:
+        populate_by_name = True
 
 class UserCreate(UserBase):
-    password: str
+    password: Optional[str] = None
     username: Optional[str] = None
     dob_year: Optional[int] = None
     employee_id: Optional[str] = None
@@ -52,15 +54,18 @@ class UserCreate(UserBase):
     location: Optional[str] = None
     job_role: Optional[str] = None
     created_by_consultant_id: Optional[int] = None
-    assigned_locations: Optional[List[str]] = None
+    assigned_locations: Optional[List[str]] = Field(None, alias="assignedLocations")
+    business_unit: Optional[str] = Field(None, alias="businessUnit")
     invited: bool = False
-    employer_id: Optional[int] = None
+    employer_id: Optional[int] = Field(None, alias="employerId")
+    jobRoleId: Optional[int] = None
     phone: Optional[str] = None
     specialization: Optional[str] = None
     qualifications: Optional[str] = None
-    license_number: Optional[str] = None
+    license_number: Optional[str] = Field(None, alias="licenseNumber")
     city: Optional[str] = None
     state: Optional[str] = None
+
 
 class User(UserBase):
     id: int
@@ -71,10 +76,14 @@ class User(UserBase):
         from_attributes = True
 
 class EmployerBase(BaseModel):
-    name: str
+    name: str = Field(..., alias="employerName")
     industry: Optional[str] = None
-    contact_email: Optional[str] = None
-    contact_phone: Optional[str] = None
+    contact_email: Optional[str] = Field(None, alias="contactEmail")
+    contact_phone: Optional[str] = Field(None, alias="contactPhone")
+
+    model_config = {
+        "populate_by_name": True,
+    }
 
 class EmployerCreate(EmployerBase):
     address: Optional[str] = None
@@ -84,18 +93,25 @@ class EmployerCreate(EmployerBase):
     country: str = "Australia"
     abn: Optional[str] = None
     website: Optional[str] = None
-    subclients: List[str] = []
-    business_units: List[str] = []
-    locations: List[str] = []
-    job_roles: List[str] = []
+    is_active: bool = True 
+    subclients: List[str] = Field(default_factory=list)
+    business_units: List[str] = Field(default_factory=list, alias="businessUnits")
+    locations: List[str] = Field(default_factory=list)
+    job_roles: List[str] = Field(default_factory=list, alias="jobRoles")
+
+    model_config = {
+        "populate_by_name": True,
+    }
 
 class Employer(EmployerBase):
     id: int
     is_active: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {
+        "from_attributes": True,
+        "populate_by_name": True,
+    }
 
 class AssessmentBase(BaseModel):
     assessment_id: str
